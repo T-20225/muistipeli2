@@ -1,1 +1,244 @@
-# muistipeli2
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <title>Taavi sivu</title>
+</head>
+<body>
+<p>täma on peli! paina alta!</P>
+
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Muistipeli 20 paria</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #2c3e50;
+    color: white;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 {
+    margin-bottom: 20px;
+  }
+  #game-board {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-gap: 10px;
+    justify-content: center;
+  }
+  .card {
+    width: 60px;
+    height: 80px;
+    background: #2980b9;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    user-select: none;
+    color: transparent;
+    transition: background 0.3s, color 0.3s;
+  }
+  .card.flipped, .card.matched {
+    background: #ecf0f1;
+    color: #2c3e50;
+    cursor: default;
+  }
+  .card.matched {
+    background: #27ae60;
+    color: white;
+    cursor: default;
+  }
+  #stats {
+    margin-top: 15px;
+    font-size: 18px;
+  }
+  #message {
+    margin-top: 20px;
+    font-size: 20px;
+  }
+  button {
+    margin-top: 20px;
+    padding: 8px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background: #27ae60;
+    color: white;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #219150;
+  }
+</style>
+</head>
+<body>
+
+<h1>Muistipeli 20 paria</h1>
+
+<div id="game-board"></div>
+
+<div id="stats">
+  Aika: <span id="time">0:00</span> | Yritykset: <span id="attempts">0</span>
+</div>
+
+<div id="message"></div>
+<button id="restart-btn">Aloita alusta</button>
+
+<script>
+  const pairsCount = 20;
+  const gameBoard = document.getElementById('game-board');
+  const message = document.getElementById('message');
+  const restartBtn = document.getElementById('restart-btn');
+  const timeSpan = document.getElementById('time');
+  const attemptsSpan = document.getElementById('attempts');
+
+  let cards = [];
+  let firstCard = null;
+  let secondCard = null;
+  let lockBoard = false;
+  let matchedPairs = 0;
+  let attempts = 0;
+
+  let timerInterval = null;
+  let startTime = null;
+
+  const cardSymbols = [
+    '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
+    '🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐴','🐢'
+  ];
+
+  function shuffle(array) {
+    for(let i = array.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function createCards() {
+    cards = [];
+    for(let i = 0; i < pairsCount; i++){
+      cards.push({ id: i*2, symbol: cardSymbols[i] });
+      cards.push({ id: i*2+1, symbol: cardSymbols[i] });
+    }
+    shuffle(cards);
+  }
+
+  function updateTimer() {
+    const now = new Date();
+    const diff = Math.floor((now - startTime) / 1000);
+    const minutes = Math.floor(diff / 60);
+    const seconds = diff % 60;
+    timeSpan.textContent = `${minutes}:${seconds.toString().padStart(2,'0')}`;
+  }
+
+  function startTimer() {
+    startTime = new Date();
+    timeSpan.textContent = '0:00';
+    timerInterval = setInterval(updateTimer, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+  }
+
+  function resetGame() {
+    matchedPairs = 0;
+    attempts = 0;
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+    message.textContent = '';
+    attemptsSpan.textContent = attempts;
+    createCards();
+    renderBoard();
+    stopTimer();
+    startTimer();
+  }
+
+  function renderBoard() {
+    gameBoard.innerHTML = '';
+    cards.forEach(card => {
+      const cardElement = document.createElement('div');
+      cardElement.classList.add('card');
+      cardElement.dataset.id = card.id;
+      cardElement.dataset.symbol = card.symbol;
+      cardElement.textContent = card.symbol;
+      cardElement.style.color = 'transparent';
+      cardElement.addEventListener('click', onCardClicked);
+      gameBoard.appendChild(cardElement);
+    });
+  }
+
+  function onCardClicked(e) {
+    if(lockBoard) return;
+    const clicked = e.currentTarget;
+    if(clicked === firstCard) return;
+
+    flipCard(clicked);
+
+    if(!firstCard){
+      firstCard = clicked;
+      return;
+    }
+
+    secondCard = clicked;
+    lockBoard = true;
+    attempts++;
+    attemptsSpan.textContent = attempts;
+
+    checkMatch();
+  }
+
+  function flipCard(card) {
+    card.classList.add('flipped');
+    card.style.color = 'black';
+  }
+
+  function unflipCards() {
+    setTimeout(() => {
+      firstCard.classList.remove('flipped');
+      secondCard.classList.remove('flipped');
+      firstCard.style.color = 'transparent';
+      secondCard.style.color = 'transparent';
+      resetTurn();
+    }, 1000);
+  }
+
+  function checkMatch() {
+    if(firstCard.dataset.symbol === secondCard.dataset.symbol){
+      firstCard.classList.add('matched');
+      secondCard.classList.add('matched');
+      matchedPairs++;
+      resetTurn();
+      if(matchedPairs === pairsCount){
+        stopTimer();
+        message.textContent = `Onneksi olkoon! Voitit pelin ${attempts} yrityksellä ajassa ${timeSpan.textContent}.`;
+      }
+    } else {
+      unflipCards();
+    }
+  }
+
+  function resetTurn() {
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+  }
+
+  restartBtn.addEventListener('click', resetGame);
+
+  resetGame();
+</script>
+
+</body>
+</html>
