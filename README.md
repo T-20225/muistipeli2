@@ -7,7 +7,7 @@
 <body>
 <p>täma on peli! pelaa alta!</P>
 
-<!DOCTYPE html>
+
 <html lang="fi">
 <head>
 <meta charset="UTF-8" />
