@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+
 <html lang="fi">
 <head>
   <meta charset="UTF-8">
   <title>Taavi sivu</title>
 </head>
 <body>
-<p>täma on peli! paina alta!</P>
+<p>täma on peli! pelaa alta!</P>
 
 <!DOCTYPE html>
 <html lang="fi">
